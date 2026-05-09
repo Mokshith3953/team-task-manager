@@ -10,7 +10,9 @@ router.get('/', auth, async (req, res) => {
     const filter = req.user.role === 'Admin'
       ? {}
       : { $or: [{ owner: req.user.id }, { 'members.user': req.user.id }] };
-    const projects = await Project.find(filter).populate('owner members.user');
+    const projects = await Project.find(filter)
+      .populate('owner')
+      .populate({ path: 'members.user', select: 'name email role' });
     res.json(projects);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -38,7 +40,7 @@ router.put('/:id', auth, async (req, res) => {
     const project = await Project.findById(req.params.id);
     const isOwner = project.owner.toString() === req.user.id;
     const isProjectAdmin = project.members.some(
-      m => m.user.toString() === req.user.id && m.role === 'admin'
+      m => m.user?.toString() === req.user.id && m.role === 'admin'
     );
     if (!isOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });

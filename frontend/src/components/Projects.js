@@ -55,9 +55,13 @@ const Projects = () => {
   const handleAddMember = async (projectId) => {
     if (!newMemberId) return;
     const project = projects.find(p => p._id === projectId);
-    const existingIds = project.members.map(m => m.user?._id || m.user);
+    const existingMembers = project.members
+      .filter(m => m.user)
+      .map(m => ({ user: m.user._id || m.user, role: m.role }));
     try {
-      await api.put(`/api/projects/${projectId}`, { members: [...existingIds, newMemberId] });
+      await api.put(`/api/projects/${projectId}`, {
+        members: [...existingMembers, { user: newMemberId, role: 'member' }]
+      });
       setAddingMemberFor(null);
       setNewMemberId('');
       await fetchProjects();
@@ -130,9 +134,9 @@ const Projects = () => {
                     {project.description && <p className="project-desc">{project.description}</p>}
                     <div className="member-tags">
                       <span className="member-tag owner-tag">{project.owner?.name} (owner)</span>
-                      {project.members.map(m => (
-                        <span key={m.user?._id} className={`member-tag${m.role === 'admin' ? ' admin-tag' : ''}`}>
-                          {m.user?.name} {m.role === 'admin' ? '(admin)' : '(member)'}
+                      {project.members.filter(m => m.user).map(m => (
+                        <span key={m.user._id} className={`member-tag${m.role === 'admin' ? ' admin-tag' : ''}`}>
+                          {m.user.name} {m.role === 'admin' ? '(admin)' : '(member)'}
                         </span>
                       ))}
                     </div>
@@ -146,7 +150,7 @@ const Projects = () => {
                         >
                           <option value="">Select user...</option>
                           {users
-                            .filter(u => u._id !== project.owner?._id && !project.members.find(m => (m.user?._id || m.user) === u._id))
+                            .filter(u => u._id !== project.owner?._id && !project.members.find(m => m.user?._id === u._id || m.user === u._id))
                             .map(u => (
                               <option key={u._id} value={u._id}>{u.name} ({u.role})</option>
                             ))}

@@ -40,7 +40,7 @@ router.put('/:id', auth, async (req, res) => {
     const isAssigned = task.assignedTo && task.assignedTo.toString() === req.user.id;
     const isProjectOwner = project && project.owner.toString() === req.user.id;
     const isProjectAdmin = project && project.members.some(
-      m => m.user.toString() === req.user.id && m.role === 'admin'
+      m => m.user?.toString() === req.user.id && m.role === 'admin'
     );
     if (!isAssigned && !isProjectOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
@@ -60,7 +60,7 @@ router.delete('/:id', auth, async (req, res) => {
     const isAssigned = task.assignedTo && task.assignedTo.toString() === req.user.id;
     const isProjectOwner = project && project.owner.toString() === req.user.id;
     const isProjectAdmin = project && project.members.some(
-      m => m.user.toString() === req.user.id && m.role === 'admin'
+      m => m.user?.toString() === req.user.id && m.role === 'admin'
     );
     if (!isAssigned && !isProjectOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
