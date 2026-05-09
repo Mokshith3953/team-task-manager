@@ -196,6 +196,7 @@ textarea { resize: vertical; min-height: 80px; }
   font-weight: 500;
 }
 .owner-tag { background: #F0FDF4; color: #16A34A; }
+.admin-tag { background: #FEF3C7; color: #D97706; }
 
 .add-member-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.625rem; }
 
