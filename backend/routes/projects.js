@@ -7,7 +7,9 @@ const router = express.Router();
 // Get all projects
 router.get('/', auth, async (req, res) => {
   try {
-    const projects = await Project.find({ $or: [{ owner: req.user.id }, { members: req.user.id }] }).populate('owner members');
+    const projects = await Project.find({
+      $or: [{ owner: req.user.id }, { 'members.user': req.user.id }]
+    }).populate('owner members.user');
     res.json(projects);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -30,7 +32,11 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    if (project.owner.toString() !== req.user.id && req.user.role !== 'Admin') {
+    const isOwner = project.owner.toString() === req.user.id;
+    const isProjectAdmin = project.members.some(
+      m => m.user.toString() === req.user.id && m.role === 'admin'
+    );
+    if (!isOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
     const updatedProject = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -44,7 +50,8 @@ router.put('/:id', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);
-    if (project.owner.toString() !== req.user.id && req.user.role !== 'Admin') {
+    const isOwner = project.owner.toString() === req.user.id;
+    if (!isOwner && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
     await Project.findByIdAndDelete(req.params.id);

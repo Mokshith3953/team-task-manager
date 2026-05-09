@@ -39,7 +39,10 @@ router.put('/:id', auth, async (req, res) => {
     const project = await Project.findById(task.project);
     const isAssigned = task.assignedTo && task.assignedTo.toString() === req.user.id;
     const isProjectOwner = project && project.owner.toString() === req.user.id;
-    if (!isAssigned && !isProjectOwner && req.user.role !== 'Admin') {
+    const isProjectAdmin = project && project.members.some(
+      m => m.user.toString() === req.user.id && m.role === 'admin'
+    );
+    if (!isAssigned && !isProjectOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
     const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -56,7 +59,10 @@ router.delete('/:id', auth, async (req, res) => {
     const project = await Project.findById(task.project);
     const isAssigned = task.assignedTo && task.assignedTo.toString() === req.user.id;
     const isProjectOwner = project && project.owner.toString() === req.user.id;
-    if (!isAssigned && !isProjectOwner && req.user.role !== 'Admin') {
+    const isProjectAdmin = project && project.members.some(
+      m => m.user.toString() === req.user.id && m.role === 'admin'
+    );
+    if (!isAssigned && !isProjectOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
     await Task.findByIdAndDelete(req.params.id);
