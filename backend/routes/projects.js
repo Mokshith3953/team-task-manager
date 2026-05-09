@@ -21,7 +21,10 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   const { name, description, members } = req.body;
   try {
-    const project = new Project({ name, description, owner: req.user.id, members });
+    const normalizedMembers = (members || []).map(m =>
+      typeof m === 'string' ? { user: m, role: 'member' } : m
+    );
+    const project = new Project({ name, description, owner: req.user.id, members: normalizedMembers });
     await project.save();
     res.status(201).json(project);
   } catch (err) {
@@ -39,6 +42,11 @@ router.put('/:id', auth, async (req, res) => {
     );
     if (!isOwner && !isProjectAdmin && req.user.role !== 'Admin') {
       return res.status(403).json({ error: 'Not authorized' });
+    }
+    if (req.body.members) {
+      req.body.members = req.body.members.map(m =>
+        typeof m === 'string' ? { user: m, role: 'member' } : m
+      );
     }
     const updatedProject = await Project.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json(updatedProject);
