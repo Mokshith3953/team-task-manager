@@ -7,9 +7,10 @@ const router = express.Router();
 // Get all projects
 router.get('/', auth, async (req, res) => {
   try {
-    const projects = await Project.find({
-      $or: [{ owner: req.user.id }, { 'members.user': req.user.id }]
-    }).populate('owner members.user');
+    const filter = req.user.role === 'Admin'
+      ? {}
+      : { $or: [{ owner: req.user.id }, { 'members.user': req.user.id }] };
+    const projects = await Project.find(filter).populate('owner members.user');
     res.json(projects);
   } catch (err) {
     res.status(400).json({ error: err.message });
